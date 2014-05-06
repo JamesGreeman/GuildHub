@@ -5,11 +5,11 @@ Code base for guild hub project
 
 
 APIs
-=====================================================
+====
 used to request information in JSON format
 
 Guild API
------------------------------------------------------
+---------
 - Used to load information about a guild and its members
 - Current actions:
   - getGuildMemberItems
@@ -18,8 +18,8 @@ Guild API
       
 
 Character API
------------------------------------------------------
+-------------
 
 
 User API
------------------------------------------------------
+--------
