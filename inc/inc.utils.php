@@ -199,7 +199,8 @@ class Utils {
     public static function getSpecIDByName($sClass, $sSpec){
         global $g_aSpecIDs;
         if (is_numeric($sClass)){
-            $sClass =   Utils::getClassByID($sClass)['name'];
+            $sClass =   Utils::getClassByID($sClass);
+            $sClass =   $sClass['name'];
         }
         $sKey =   Utils::slugifyString($sClass) . "_" . Utils::slugifyString($sSpec);
         if(isset($g_aSpecIDs[$sKey])){
@@ -224,6 +225,9 @@ class Utils {
 
     //function used to turn a string into a "slug"
     static function slugifyString($sString, $bRemoveSpace = false){
+        $sString    =   urldecode($sString);
+        Utils::debugLog('Slugify_Realm', "Turning $sString into a slug");
+        $sString    =   str_replace('\\', '', $sString);
         $sString    =   str_replace("'", '', $sString);
         $sString    =   preg_replace('~[^\\pL\d]+~u', '-', $sString);
         $sString    =   trim($sString, '-');

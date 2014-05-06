@@ -24,13 +24,12 @@ class ItemManager{
                                 WHERE
                                     audit_fk  IN (
                                         SELECT
-                                            audit_id
+                                            MAX(audit_id)
                                         FROM
                                             audits
                                         WHERE
                                             character_fk    =   "   .   $this->m_nCharacterID   .   "
-                                        ORDER BY audit_id DESC
-                                        LIMIT 1 )
+                                        )
                                 ";
             Utils::debugLog('SQL_Query', $sSQL);
             $oRes   =   $oCon->query($sSQL);
@@ -38,7 +37,7 @@ class ItemManager{
                 while ($aRow = $oRes->fetch_assoc()){
                     $oItem              =   new Item();
                     $oItem->loadItemFromDatabase($aRow['audit_item_id']);
-                    $this->m_aItems[]   =   $oItem;
+                    $this->m_aItems[$oItem->getItemSlot()] =   $oItem;
                 }
             } else {
                 Utils::debugLog("No_Audits", "No audits for character with id: " . $this->m_nCharacterID);
@@ -75,13 +74,13 @@ class ItemManager{
                     $aItems =   $aCharData['items'];
                     foreach(Utils::$m_aItemSlots as $sItem => $nID){
                         if (isset($aItems[$sItem])){
-                            $oItem              =   new Item();
+                            $oItem                  =   new Item();
                             $oItem->loadItemFromArray($sItem, $aItems[$sItem]);
-                            $this->m_aItems[]   =   $oItem;
+                            $this->m_aItems[$sItem] =   $oItem;
                         } else if ($sItem != 'offHand') {
-                            $oItem              =   new Item();
+                            $oItem                  =   new Item();
                             $oItem->loadItemFromArray($sItem);
-                            $this->m_aItems[]   =   $oItem;
+                            $this->m_aItems[$sItem] =   $oItem;
                         }
                     }
                 }
@@ -155,6 +154,18 @@ class ItemManager{
            }
        }
    }
+    public function toArray(){
+        $aItems =   array();
+        if (sizeof($this->m_aItems) > 0){
+            foreach($this->m_aItems as $sItem => $oItem){
+                $aItems[$sItem] =   $oItem->toArray();
+            }
+        } else {
+            Utils::debugLog('No_Items', 'No Items loaded for this character');
+        }
+        return $aItems;
+    }
+
 }
 
 class Item{
@@ -205,7 +216,13 @@ class Item{
         }
 
     }
-
+    public function toArray(){
+        $aItem                  =   array();
+        $aItem['item_id']       =   $this->m_nItemID;
+        $aItem['item_slot']     =   $this->m_sItemSlot;
+        $aItem['item_level']    =   $this->m_nItemLevel;
+        return $aItem;
+    }
     //Getters
 
     public function getItemLevel(){
