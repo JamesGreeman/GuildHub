@@ -276,6 +276,36 @@ class GuildManager{
                 return -2;
             }
         }
+        return -1;
+    }
+
+    public static function getGuildInfo($nID){
+        $oCon   =   Utils::getConnection('guild_hub');
+        if ($oCon){
+            $sSQL   =   " SELECT
+                                *
+                            FROM
+                                guilds
+                            WHERE
+                                guild_id  = $nID
+                            LIMIT 1";
+            Utils::debugLog('SQL_Query', $sSQL);
+            $oRes   =   $oCon->query($sSQL);
+            if ($oRes){
+                $aRow   =   $oRes->fetch_assoc();
+                $aGuildInfo['guild_name']   =   $aRow['guild_name'];
+                $aGuildInfo['realm_id']     =   $aRow['realm_fk'];
+                $aGuildInfo['realm_info']   =   Utils::getRealmByID($aGuildInfo['realm_id']);
+                $aGuildInfo['guild_level']  =   $aRow['guild_level'];
+                $aGuildInfo['faction']      =   $aRow['faction'];
+                $aGuildInfo['leader_fk']    =   $aRow['leader_fk'];
+                return $aGuildInfo;
+            } else {
+                Utils::debugLog("No_Guild", "Guild with ID $nID does not exist");
+                return -2;
+            }
+        }
+        return -1;
     }
 
 }

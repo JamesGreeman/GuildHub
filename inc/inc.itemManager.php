@@ -128,7 +128,7 @@ class ItemManager{
 
            //store each item
            foreach ($this->m_aItems as $oItem){
-               $nItemLevel  =   $oItem->getItemID();
+               $nItemLevel  =   $oItem->getItemLevel();
                $nItemID     =   $oItem->getItemID();
                $sItemSlot   =   $oItem->getItemSlot() ;
                $sItemSQL    =   "   INSERT INTO
@@ -157,7 +157,14 @@ class ItemManager{
     public function toArray(){
         $aItems =   array();
         if (sizeof($this->m_aItems) > 0){
-            foreach($this->m_aItems as $sItem => $oItem){
+            foreach(Utils::$m_aItemSlots as $sItem => $nEnabled){
+                if (isset($this->m_aItems[$sItem])){
+                    $oItem  =   $this->m_aItems[$sItem];
+                } else {
+                    $oItem                  =   new Item();
+                    $oItem->loadItemFromArray($sItem);
+                }
+
                 $aItems[$sItem] =   $oItem->toArray();
             }
         } else {
@@ -203,10 +210,15 @@ class Item{
     public function loadItemFromArray($sItemSlot ,$aData = array()){
         $this->m_sItemSlot  =   $sItemSlot;
 
-        if (isset($aData['item_level'])){
-            $this->m_nItemLevel =   $aData['item_level'];
+        if (isset($aData['itemLevel'])){
+            $this->m_nItemLevel =   $aData['itemLevel'];
         } else {
-            $this->m_nItemLevel =   0;
+            if ($sItemSlot == 'offHand'){
+                $this->m_nItemLevel =   -1;
+            } else {
+                $this->m_nItemLevel =   0;
+            }
+
         }
 
         if (isset($aData['id'])){
@@ -220,7 +232,12 @@ class Item{
         $aItem                  =   array();
         $aItem['item_id']       =   $this->m_nItemID;
         $aItem['item_slot']     =   $this->m_sItemSlot;
-        $aItem['item_level']    =   $this->m_nItemLevel;
+        if ($this->m_nItemLevel == -1){
+            $aItem['item_level']    =   '-';
+        } else {
+            $aItem['item_level']    =   $this->m_nItemLevel;
+        }
+
         return $aItem;
     }
     //Getters

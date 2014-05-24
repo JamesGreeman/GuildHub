@@ -5,7 +5,7 @@ include_once 'inc/inc.header.php';
 <div id="content"></div>
 <script>
 
-    url =   '/api/reportAPI.php?action=get_ilvl_array&guild_id=1';
+    var url =   "/guildhub/api/api.guild.php?action=getGuildMemberItems&guildName=Lore&region=EU&realm=Quel'Thalas";
     $.getJSON(url , function(data) {
         table_html  =   jsonToTable(data);
         $("#content").html(table_html);
@@ -17,14 +17,17 @@ include_once 'inc/inc.header.php';
         var table_html = '<table class="ilvl_table">';
         var table_body = '<tbody>';
         var table_head = '';
+        var characters  =   data.characters;
 
-        $.each(data, function(charName, charItems) {
+
+        $.each(characters, function(characterID, character) {
             var table_row   =   '';
             table_head      =   '<thead><tr><th scope="col">Character</th>';
-            table_row       +=  '<td>' + charName + '</td>';
-            $.each(charItems, function(itemName , itemLevel) {
-                table_head  +=  '<th scope="col">' +itemName + '</th>';
-                table_row   +=  '<td>' +itemLevel + '</td>';
+            table_row       +=  '<td>' + character.character_name + '</td>';
+            var charItems   =   character.items;
+            $.each(charItems, function(itemSlot , item) {
+                table_head  +=  '<th scope="col">' +itemSlot + '</th>';
+                table_row   +=  '<td>' +item.item_level + '</td>';
 
             });
             table_body  +=  '<tr>' + table_row + '</tr>';

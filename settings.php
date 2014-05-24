@@ -8,6 +8,12 @@ $g_aApiPrefixes =   array(
     'EU'    => 'http://eu.battle.net',
     'US'    => 'http://us.battle.net'
 );
+if (isset($_SERVER['HTTP_HOST'])){
+    $g_sURLBase     =   $_SERVER['HTTP_HOST'] . '/guildhub';
+} else {
+    $g_sURLBase     =   $_SERVER['SERVER_NAME'] . '/guildhub';
+}
+
 include_once __CACHEDIR__   .   '/cache.globals.php';
 
 include_once __INCDIR__     .   '/inc.utils.php';
