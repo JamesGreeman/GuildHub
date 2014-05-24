@@ -47,6 +47,7 @@ if ($oCon){
             '    "locale" => "' . $aRow['locale'] . '"' . "\n" .
             ');' . "\n";
         $sCacheRealmsByID   .=   "\$g_aRealmById['" . $aRow["realm_id"] . '\'] = array(' . "\n" .
+            '    "id"   =>"'. $aRow['realm_id'] .'", ' . "\n" .
             '    "name" =>"'. $aRow['realm_name'] .'", ' . "\n" .
             '    "region" => "' . $aRow['region'] . '", ' . "\n" .
             '    "slug" => "' . $aRow['slug'] . '", ' . "\n" .

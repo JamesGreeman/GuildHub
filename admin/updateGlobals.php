@@ -22,7 +22,7 @@ if (isset($_REQUEST['action'])){
         $sClasses   =   "\n\$g_aClasses = array();\n";
         $aClassID   =   array();
         while ($aRow = $oRes->fetch_assoc()){
-            $sClasses   .=  "\$g_aClasses['" . $aRow['class_id'] . "'] = array( 'name' => '". $aRow['class_name'] ."', 'armour-type' => '". $aRow['armour_type'] ."', 'tier-token' => '". $aRow['tier_token'] ."');\n";
+            $sClasses   .=  "\$g_aClasses['" . $aRow['class_id'] . "'] = array('id' => '" . $aRow['class_id'] . "', 'name' => '". $aRow['class_name'] ."', 'armour-type' => '". $aRow['armour_type'] ."', 'tier-token' => '". $aRow['tier_token'] ."');\n";
             $aClassID[$aRow['class_name']] = $aRow['class_id'];
         }
         file_put_contents('../cache/cache.globals.php', $sClasses, FILE_APPEND);
@@ -38,7 +38,7 @@ if (isset($_REQUEST['action'])){
         file_put_contents('../cache/cache.globals.php', "\n\$g_aSpecs = array();\n", FILE_APPEND);
         $aSpecIDs   =   array();
         while ($aRow = $oRes->fetch_assoc()){
-            file_put_contents('../cache/cache.globals.php', "\$g_aSpecs['" . $aRow['spec_id'] . "'] = array( 'name' => '". $aRow['spec_name'] ."', 'class_id' => ". $aRow['class_fk'] .", 'role' => '" . $aRow['role'] . "', 'main_stat' => '" . $aRow['main_stat'] . "'  );\n", FILE_APPEND);
+            file_put_contents('../cache/cache.globals.php', "\$g_aSpecs['" . $aRow['spec_id'] . "'] = array('id' => '" . $aRow['spec_id'] . "', 'name' => '". $aRow['spec_name'] ."', 'class_id' => ". $aRow['class_fk'] .", 'role' => '" . $aRow['role'] . "', 'main_stat' => '" . $aRow['main_stat'] . "'  );\n", FILE_APPEND);
             $aSpecIDs[str_replace(" ", "-", strtolower($aRow['class_name'] . "_" . $aRow['spec_name']))] = $aRow['spec_id'];
         }
 

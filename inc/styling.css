@@ -5,8 +5,10 @@ body
 {
     font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
     line-height: 1.6em;
+    background : #DEF;
 }
 
+.ui-dialog{ overflow:visible; }
 
 .ilvl_table
 {
@@ -36,16 +38,6 @@ body
     background: #d0dafd;
 }
 
-.navigation div{
-    width: 100%;
-    background: #333;
-    color: #fff;
-    display: block;
-    padding: 7px 8px;
-    text-decoration: none;
-    border-top: 1px solid #069;
-}
-
 .nav {
     margin: 0px;
     padding: 0px;
@@ -59,16 +51,16 @@ body
 }
 
 .nav li a {
-    background: #333;
-    color: #fff;
+    background: #DEF;
+    color: #069;
     display: block;
     padding: 7px 8px;
     text-decoration: none;
-    border-top: 1px solid #069;
+    border-top: 1px solid #FFF;
 }
 
 .nav li a:hover {
-    color: #069;
+    color: #669;
 }
 
 /*=== submenu ===*/
@@ -90,12 +82,16 @@ body
     display: block;
     height: 15px;
     padding: 7px 8px;
-    color: #fff;
+    color: #069;
     text-decoration: none;
-    border-bottom: 1px solid #222;
+    border-bottom: 1px solid #FFF;
 }
 
 .nav ul li a:hover {
-    color: #069;
+    color: #669;
 }
 
+.ui-tooltip{
+    padding: 5px;
+    font-size:10pt;
+}

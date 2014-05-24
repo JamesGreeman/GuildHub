@@ -149,6 +149,38 @@ class GuildManager{
         }
     }
 
+    //Add a new character to the guild
+    public function addCharacter($sRegion, $sRealm, $sName){
+        $oCharacterManager  =   new CharacterManager($sRegion, $sRealm, $sName);
+        //TODO: check that either character is in the guild on BNET, or the guild leader is making request.
+        if ($oCharacterManager->getRealmID() == $this->m_nRealmID){
+            $oCharacterManager->updateGuild($this->m_nGuildID);
+        } else {
+            Utils::debugLog("Add_Character", "Cannot add $sName $sRegion-$sRealm, not on the same realm as guild: " . $this->m_nGuildID);
+        }
+
+        return $oCharacterManager->getCharacterDetailArray();
+    }
+
+    public function removeCharacter($sRegion, $sRealm, $sName){
+        $oCharacterManager  =   new CharacterManager($sRegion, $sRealm, $sName);
+        //TODO: the guild leader is making request.  Notify character owner
+        if ($oCharacterManager->getGuildID() == $this->m_nGuildID){
+            Utils::debugLog("Remove_Character", "Removing $sName $sRegion-$sRealm from " . $this->m_nGuildID);
+            $oCharacterManager->updateGuild(-1);
+            if ($oCharacterManager->getGuildID() == -1){
+                Utils::debugLog("Remove_Character", "Character removed");
+                return true;
+            } else {
+                Utils::debugLog("Remove_Character", "Failed to remove");
+                return false;
+            }
+        } else {
+            Utils::debugLog("Remove_Character", "Cannot remove $sName $sRegion-$sRealm from " . $this->m_nGuildID . ' character is not in this guild');
+        }
+
+    }
+
     //Run audit
     public function runAudit(){
         foreach ($this->m_aGuildMembers as $oCharacter){
@@ -178,20 +210,77 @@ class GuildManager{
             } else {
                 return false;
             }
+        } else {
+            return false;
         }
     }
 
-    public function toArray($sFilter="", $sSort="", $sLimit=""){
+    public function getGuildArray(){
         $aGuildData                 =   array();
         $aGuildData['guild_id']     =   $this->m_nGuildID;
         $aGuildData['guild_name']   =   $this->m_sGuildName;
-        $aGuildData['realm_id']     =   $this->m_nRealmID;
-        $aRealm                     =   Utils::getRealmByID($this->m_nRealmID);
-        $aGuildData['region']       =   $aRealm['region'];
-        $aGuildData['realm_name']   =   $aRealm['name'];
+        $aGuildData['realm']        =   Utils::getRealmByID($this->m_nRealmID);
         $aGuildData['faction']      =   $this->m_sFaction;
         $aGuildData['guild_level']  =   $this->m_nLevel;
         $aGuildData['owner_id']     =   $this->m_nLeaderID;
+
+        return $aGuildData;
+    }
+
+    public function getGuildMemberItemArray($sFilter="", $sSort="", $sLimit=""){
+    $aGuildData                 =   array();
+    $aGuildData['guild_id']     =   $this->m_nGuildID;
+    $aGuildData['guild_name']   =   $this->m_sGuildName;
+
+    if (sizeof($this->m_aGuildMembers) > 0){
+        $oCon   =   Utils::getConnection('guild_hub');
+        if ($oCon){
+            $aGuildData['characters']   =   array();
+            if ($sFilter){
+                $sFilterStatement   =   Utils::processFilterConditions($sFilter);
+            } else {
+                $sFilterStatement   =   "";
+            }
+            if ($sSort){
+                $sSortStatement     =   Utils::processSortConditions($sSort);
+            }else {
+                $sSortStatement     =   "";
+            }
+            if ($sLimit){
+                $sLimitStatement    =   Utils::processLimitConditions($sLimit);
+            }else {
+                $sLimitStatement    =   "";
+            }
+            $sSQL   =   "   SELECT
+                                    character_id
+                                FROM
+                                    characters
+                                WHERE
+                                     guild_fk   =   "   .   $this->m_nGuildID   .   "
+                                     $sFilterStatement
+                                $sSortStatement
+                                $sLimitStatement";
+            Utils::debugLog('SQL_Query', $sSQL);
+            $oRes   =   $oCon->query($sSQL);
+            if ($oRes){
+                while ($aRow = $oRes->fetch_assoc()){
+                    $nID    =   $aRow['character_id'];
+                    $aGuildData['characters'][] =   $this->m_aGuildMembers[$nID]->getCharacterItemArray();
+                }
+            } else {
+                Utils::debugLog('No_Character', 'No Characters matching conditions: ' . $sFilterStatement);
+            }
+        }
+    } else {
+        Utils::debugLog('No_Characters', 'No Characters are loaded into the guild');
+    }
+    return $aGuildData;
+}
+
+    public function getGuildMemberDetailArray($sFilter="", $sSort="", $sLimit=""){
+        $aGuildData                 =   array();
+        $aGuildData['guild_id']     =   $this->m_nGuildID;
+        $aGuildData['guild_name']   =   $this->m_sGuildName;
 
         if (sizeof($this->m_aGuildMembers) > 0){
             $oCon   =   Utils::getConnection('guild_hub');
@@ -203,12 +292,12 @@ class GuildManager{
                     $sFilterStatement   =   "";
                 }
                 if ($sSort){
-                    $sSortStatement     =   Utils::processFilterConditions($sSort);
+                    $sSortStatement     =   Utils::processSortConditions($sSort);
                 }else {
                     $sSortStatement     =   "";
                 }
                 if ($sLimit){
-                    $sLimitStatement    =   Utils::processFilterConditions($sLimit);
+                    $sLimitStatement    =   Utils::processLimitConditions($sLimit);
                 }else {
                     $sLimitStatement    =   "";
                 }
@@ -226,7 +315,7 @@ class GuildManager{
                 if ($oRes){
                     while ($aRow = $oRes->fetch_assoc()){
                         $nID    =   $aRow['character_id'];
-                        $aGuildData['characters'][$nID] =   $this->m_aGuildMembers[$nID]->toArray();
+                        $aGuildData['characters'][] =   $this->m_aGuildMembers[$nID]->getCharacterDetailArray();
                     }
                 } else {
                     Utils::debugLog('No_Character', 'No Characters matching conditions: ' . $sFilterStatement);
@@ -238,6 +327,53 @@ class GuildManager{
         return $aGuildData;
     }
 
+    public function getGuildMemberArray($sFilter="", $sSort="", $sLimit=""){
+        $aGuildData                 =   $this->getGuildArray();
+
+        if (sizeof($this->m_aGuildMembers) > 0){
+            $oCon   =   Utils::getConnection('guild_hub');
+            if ($oCon){
+                $aGuildData['characters']   =   array();
+                if ($sFilter){
+                    $sFilterStatement   =   Utils::processFilterConditions($sFilter);
+                } else {
+                    $sFilterStatement   =   "";
+                }
+                if ($sSort){
+                    $sSortStatement     =   Utils::processSortConditions($sSort);
+                }else {
+                    $sSortStatement     =   "";
+                }
+                if ($sLimit){
+                    $sLimitStatement    =   Utils::processLimitConditions($sLimit);
+                }else {
+                    $sLimitStatement    =   "";
+                }
+                $sSQL   =   "   SELECT
+                                    character_id
+                                FROM
+                                    characters
+                                WHERE
+                                     guild_fk   =   "   .   $this->m_nGuildID   .   "
+                                     $sFilterStatement
+                                $sSortStatement
+                                $sLimitStatement";
+                Utils::debugLog('SQL_Query', $sSQL);
+                $oRes   =   $oCon->query($sSQL);
+                if ($oRes){
+                    while ($aRow = $oRes->fetch_assoc()){
+                        $nID    =   $aRow['character_id'];
+                        $aGuildData['characters'][] =   $this->m_aGuildMembers[$nID]->getCharacterArray();
+                    }
+                } else {
+                    Utils::debugLog('No_Character', 'No Characters matching conditions: ' . $sFilterStatement);
+                }
+            }
+        } else {
+            Utils::debugLog('No_Characters', 'No Characters are loaded into the guild');
+        }
+        return $aGuildData;
+    }
     //Getters
     public function getGuildMembers(){
         if (!sizeof($this->m_aGuildMembers > 0)){
@@ -279,6 +415,7 @@ class GuildManager{
         return -1;
     }
 
+    //return basic info of a guild using id
     public static function getGuildInfo($nID){
         $oCon   =   Utils::getConnection('guild_hub');
         if ($oCon){
@@ -296,9 +433,6 @@ class GuildManager{
                 $aGuildInfo['guild_name']   =   $aRow['guild_name'];
                 $aGuildInfo['realm_id']     =   $aRow['realm_fk'];
                 $aGuildInfo['realm_info']   =   Utils::getRealmByID($aGuildInfo['realm_id']);
-                $aGuildInfo['guild_level']  =   $aRow['guild_level'];
-                $aGuildInfo['faction']      =   $aRow['faction'];
-                $aGuildInfo['leader_fk']    =   $aRow['leader_fk'];
                 return $aGuildInfo;
             } else {
                 Utils::debugLog("No_Guild", "Guild with ID $nID does not exist");

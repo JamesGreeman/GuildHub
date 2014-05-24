@@ -32,6 +32,8 @@ class CharacterManager{
             $this->m_nUserID        =   -1;
             $this->loadCharacterFromBattleNet();
             $this->storeCharacter();
+            $this->loadItemDetailsFromBattleNet();
+            $this->storeItemsAsAudit();
         }
     }
 
@@ -84,7 +86,7 @@ class CharacterManager{
             $this->m_nRaceID        =   $aCharData['race'];
             $aRace                  =   Utils::getRaceByID($this->m_nRaceID);
             $this->m_sFaction       =   $aRace['faction'];
-            $this->$m_sThumbnailURL =   $aCharData['thumbnail'];
+            $this->m_sThumbnailURL =   $aCharData['thumbnail'];
             $this->m_nLevel         =   $aCharData['level'];
             if (isset($aCharData['guild']['name'])){
                 $this->m_sGuildName =   $aCharData['guild']['name'];
@@ -94,16 +96,17 @@ class CharacterManager{
                 $this->m_nGuildID   =   -1;
             }
 
-            if (isset($aCharData['talents'][0]['spec'])){
-                $sMainSpecName       =   $aCharData['talents'][0]['spec'];
+            if (isset($aCharData['talents'][0]['spec']['name'])){
+                $sMainSpecName       =   $aCharData['talents'][0]['spec']['name'];
                 $this->m_nMainSpecID =   Utils::getSpecIDByName($this->m_nClassID, $sMainSpecName);
             } else {
+                $this->m_nMainSpecID =  -1;
                 Utils::debugLog("Invalid_BNet_Response", "No Spec data returned from battle.net");
             }
 
 
-            if (isset($aCharData['talents'][1]['spec'])){
-                $sOffSpecName       =   $aCharData['talents'][1]['spec'];
+            if (isset($aCharData['talents'][1]['spec']['name'])){
+                $sOffSpecName       =   $aCharData['talents'][1]['spec']['name'];
                 $this->m_nOffSpecID =   Utils::getSpecIDByName($this->m_nClassID, $sOffSpecName);
             } else {
                 $this->m_nOffSpecID =   -1;
@@ -162,7 +165,7 @@ class CharacterManager{
                                "    . $this->m_nUserID          .   "
                             )
                             ON DUPLICATE KEY UPDATE
-                                character_id    =   LAST_INSERT_ID(guild_id),
+                                character_id    =   LAST_INSERT_ID(character_id),
                                 character_name  =   '"  . $this->m_sCharacterName   .   "',
                                 race_fk         =   "   . $this->m_nRaceID          .   ",
                                 faction         =   '"  . $this->m_sFaction         .   "',
@@ -191,14 +194,21 @@ class CharacterManager{
         $this->m_oItems->storeItemsAsAudit();
     }
 
-    public function toArray(){
+    public function getCharacterItemArray(){
         $aCharacterData =   array();
         $aCharacterData['character_id']     =   $this->m_nCharacterID;
         $aCharacterData['character_name']   =   $this->m_sCharacterName;
-        $aCharacterData['realm_id']         =   $this->m_nRealmID;
-        $aRealm                             =   Utils::getRealmByID($this->m_nRealmID);
-        $aCharacterData['region']           =   $aRealm['region'];
-        $aCharacterData['realm_name']       =   $aRealm['name'];
+
+        $aCharacterData['items']            =   $this->m_oItems->toArray();
+
+        return $aCharacterData;
+    }
+
+    public function getCharacterDetailArray(){
+        $aCharacterData =   array();
+        $aCharacterData['character_id']     =   $this->m_nCharacterID;
+        $aCharacterData['character_name']   =   $this->m_sCharacterName;
+        $aCharacterData['realm']            =   Utils::getRealmByID($this->m_nRealmID);
         $aCharacterData['guild_name']       =   $this->m_sGuildName;
         $aCharacterData['guild_id']         =   $this->m_nGuildID;        //-1 represents no guild, -2 represents that the guild does not exist within the database
         $aCharacterData['character_level']  =   $this->m_nLevel;
@@ -214,8 +224,12 @@ class CharacterManager{
         $aCharacterData['user_id']          =   $this->m_nUserID;
         $aCharacterData['thumbnail_url']    =   $this->m_sThumbnailURL;
 
-        $aCharacterData['items']            =   $this->m_oItems->toArray();
+        return $aCharacterData;
+    }
 
+    public function getCharacterArray(){
+        $aCharacterData             =   $this->getCharacterDetailArray();
+        $aCharacterData['items']    =   $this->m_oItems->toArray();
         return $aCharacterData;
     }
     //Getters
@@ -223,8 +237,20 @@ class CharacterManager{
         return $this->m_sThumbnailURL;
     }
 
-    //Setters
+    public function getGuildID(){
+        return $this->m_nGuildID;
+    }
 
+    public function getRealmID(){
+        return $this->m_nRealmID;
+    }
+
+    //Setters
+    public function updateGuild($nID){
+        //TODO: change functionality to perform checks (character is unowned, or owner is making request)
+        $this->m_nGuildID   =   $nID;
+        $this->storeCharacter();
+    }
 
     //Checkers
 
@@ -247,6 +273,63 @@ class CharacterManager{
             } else {
                 return false;
             }
+        } else {
+            return false;
         }
+    }
+
+    //Static guild methods
+
+    //get guild ID
+    public static function geCharacterID($sCharacterName, $nRealmID){
+        $oCon   =   Utils::getConnection('guild_hub');
+        if ($oCon){
+            $sSQL   =   "   SELECT
+                                character_id
+                            FROM
+                                characters
+                            WHERE
+                                guild_name  =   '$sCharacterName'  AND
+                                realm_fk    =   $nRealmID
+                            LIMIT 1";
+            Utils::debugLog('SQL_Query', $sSQL);
+            $oRes   =   $oCon->query($sSQL);
+            if ($oRes){
+                $aRow   =   $oRes->fetch_assoc();
+                return $aRow['character_id'];
+            } else {
+                Utils::debugLog("No_Character", "Character '$sCharacterName' does not exist on realm with ID '$nRealmID'");
+                return -2;
+            }
+        }
+        return -1;
+    }
+
+    //returns basic information of a character using ID
+    public static function getCharacterInfo($nID){
+        $oCon   =   Utils::getConnection('guild_hub');
+        if ($oCon){
+            $sSQL   =   " SELECT
+                                *
+                            FROM
+                                characters
+                            WHERE
+                                character_id  = $nID
+                            LIMIT 1";
+            Utils::debugLog('SQL_Query', $sSQL);
+            $oRes   =   $oCon->query($sSQL);
+            if ($oRes){
+                $aRow                               =   $oRes->fetch_assoc();
+                $aCharacterInfo                     =   array();
+                $aCharacterInfo['character_name']   =   $aRow['character_name'];
+                $aCharacterInfo['realm_id']         =   $aRow['realm_fk'];
+                $aCharacterInfo['realm_info']       =   Utils::getRealmByID($aCharacterInfo['realm_id']);
+                return $aCharacterInfo;
+            } else {
+                Utils::debugLog("No_Character", "Character with ID $nID does not exist");
+                return -2;
+            }
+        }
+        return -1;
     }
 }

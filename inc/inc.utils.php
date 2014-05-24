@@ -89,9 +89,10 @@ class Utils {
         $aConditions    =   explode(',', $sSortString);
         foreach($aConditions as $sCondition){
             $aCondition =   explode(':', $sCondition);
-            if (sizeof($aConditions)    ==  2){
-                if ($aCondition[1] == 'asc' || $sCondition[1] == 'desc'){
-                    $aStatement[]   =   "`" .   $sCondition[0] . "`" . $aCondition[1];
+            if (sizeof($aCondition)    ==  2){
+                $aCondition[1] =   strtoupper($aCondition[1]);
+                if ($aCondition[1] == 'ASC' || $aCondition[1] == 'DESC'){
+                    $aStatement[]   =   "`" .   $aCondition[0] . "` " . $aCondition[1];
                 } else {
                     Utils::debugLog("Sot_Error", "Invalid sort condition " . $aCondition[1]);
                 }
@@ -225,8 +226,8 @@ class Utils {
 
     //function used to turn a string into a "slug"
     static function slugifyString($sString, $bRemoveSpace = false){
-        $sString    =   urldecode($sString);
         Utils::debugLog('Slugify_Realm', "Turning $sString into a slug");
+        $sString    =   urldecode($sString);
         $sString    =   str_replace('\\', '', $sString);
         $sString    =   str_replace("'", '', $sString);
         $sString    =   preg_replace('~[^\\pL\d]+~u', '-', $sString);
@@ -255,6 +256,7 @@ class Utils {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_URL, $sURL);
+            Utils::debugLog("Guild_request", $sURL);
             $sRes      =   curl_exec($ch);
             if ($sRes){
                 $aData      =   json_decode($sRes, true);
@@ -283,6 +285,7 @@ class Utils {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_URL, $sURL);
+            Utils::debugLog("Character_request", $sURL);
             $sRes      =   curl_exec($ch);
             if ($sRes){
                 $aData      =   json_decode($sRes, true);
@@ -291,7 +294,6 @@ class Utils {
             }
 
             curl_close($ch);
-
         } else {
             Utils::debugLog("Invalid_Region", "'$sRegion' is not a valid region");
         }
@@ -308,6 +310,7 @@ class Utils {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_URL, $sURL);
+            Utils::debugLog("Realm_request", $sURL);
             $sRes      =   curl_exec($ch);
             if ($sRes){
                 $aData      =   json_decode($sRes, true);

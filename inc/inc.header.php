@@ -35,13 +35,21 @@
                 <a href="#">Guild</a>
                 <ul>
                     <li><a href="GuildSummary.php?id=1">My Guild</a></li>
-                    <li><a href="Guilds.php">Guild Search</a></li>
+                    <li><a href="#">Guild Search</a></li>
                     <li><a href="GuildReport.php?id=1">Guild Audit</a></li>
                 </ul>
             </li>
 
             <li>
-                <a href="login.php?logout=true">Logout</a>
+                <a href="#">Characters</a>
+                <ul>
+                    <li><a href="#">My Characters</a></li>
+                    <li><a href="#">Character Search</a></li>
+                </ul>
+            </li>
+
+            <li>
+                <a href="#">Logout</a>
             </li>
         </ul>
     </div>
@@ -50,14 +58,12 @@
 </div>
 <script>
     $(document).ready(
-        /* This is the function that will get executed after the DOM is fully loaded */
         function () {
-            /* Next part of code handles hovering effect and submenu appearing */
             $('.nav li').hover(
-                function () { //appearing on hover
+                function () {
                     $('ul', this).fadeIn();
                 },
-                function () { //disappearing on hover
+                function () {
                     $('ul', this).fadeOut();
                 }
             );
